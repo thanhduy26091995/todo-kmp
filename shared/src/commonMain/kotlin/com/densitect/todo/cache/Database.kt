@@ -1,5 +1,6 @@
 package com.densitect.todo.cache
 
+import com.densitect.todo.entity.DTOUser
 import com.densitect.todo.entity.TodoDTO
 
 internal class Database(databaseDriverFactory: DatabaseDriverFactory) {
@@ -9,6 +10,7 @@ internal class Database(databaseDriverFactory: DatabaseDriverFactory) {
     internal fun getAllTodo(): List<TodoDTO> {
         return queries.selectAllTodo().executeAsList().map {
             with(it) {
+                println(it)
                 TodoDTO(id, title, isDone == 1L)
             }
         }
@@ -27,6 +29,18 @@ internal class Database(databaseDriverFactory: DatabaseDriverFactory) {
             removeAllTodo()
             todos.forEach {
                 insertTodo(it.title, it.isDone)
+            }
+        }
+    }
+
+    internal fun createNewUser(email: String, name: String) {
+        queries.createNewUser(name = name, email = email)
+    }
+
+    internal fun getUserByEmail(email: String): DTOUser? {
+        return queries.getUserByEmail(email).executeAsOneOrNull()?.let { user ->
+            with(user) {
+                DTOUser(id, name, email)
             }
         }
     }
