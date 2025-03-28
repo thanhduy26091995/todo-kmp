@@ -1,7 +1,5 @@
 package com.densitect.todo
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.densitect.todo.entity.TodoDTO
@@ -11,8 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class TodoListViewModel(private val todoSDK: TodoSDK) : ViewModel() {
-    private val _state = mutableStateOf(TodoScreenState())
-    val state: State<TodoScreenState> = _state
+    private val _state = MutableStateFlow(TodoScreenState())
+    val state = _state.asStateFlow()
 
     private val _isRefreshing: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
@@ -27,6 +25,16 @@ class TodoListViewModel(private val todoSDK: TodoSDK) : ViewModel() {
             val todos = todoSDK.getAllTodos(forceReload = forceReload)
             _state.value = _state.value.copy(isLoading = false, todos = todos)
             _isRefreshing.value = false
+        }
+    }
+
+    fun removeTodo(todo: TodoDTO) {
+        viewModelScope.launch {
+            todoSDK.removeTodo(todo.id.toInt())
+
+            _state.value = _state.value.copy(
+                todos = _state.value.todos.filterNot { it.id == todo.id }
+            )
         }
     }
 }

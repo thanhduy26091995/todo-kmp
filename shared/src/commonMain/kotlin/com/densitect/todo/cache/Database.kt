@@ -10,10 +10,13 @@ internal class Database(databaseDriverFactory: DatabaseDriverFactory) {
     internal fun getAllTodo(): List<TodoDTO> {
         return queries.selectAllTodo().executeAsList().map {
             with(it) {
-                println(it)
                 TodoDTO(id, title, isDone == 1L)
             }
         }
+    }
+
+    internal fun removeTodoById(id: Int) {
+        queries.removeTodoById(id.toLong())
     }
 
     internal fun insertTodo(title: String, isDone: Boolean) {

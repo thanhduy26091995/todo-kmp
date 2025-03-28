@@ -18,4 +18,8 @@ class TodoSDK(databaseDriverFactory: DatabaseDriverFactory, val api: TodoAPI) {
             cachedTodos
         }
     }
+
+    fun removeTodo(todoId: Int) {
+        database.removeTodoById(todoId)
+    }
 }

@@ -27,3 +27,6 @@ DELETE FROM Todo;
 
 selectAllTodo:
 SELECT * FROM Todo;
+
+removeTodoById:
+DELETE FROM Todo WHERE id = ?;
