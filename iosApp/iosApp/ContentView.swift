@@ -2,32 +2,64 @@ import SwiftUI
 import Shared
 
 struct ContentView: View {
-    @State private var showContent = false
+    @ObservedObject private(set) var viewModel: ViewModel
+    
     var body: some View {
-        VStack {
-            Button("Click me!") {
-                withAnimation {
-                    showContent = !showContent
-                }
-            }
-
-            if showContent {
-                VStack(spacing: 16) {
-                    Image(systemName: "swift")
-                        .font(.system(size: 200))
-                        .foregroundColor(.accentColor)
-                    Text("SwiftUI: \(Greeting().greet())")
-                }
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
+        NavigationView {
+            listView()
+                .navigationTitle("Todo List")
+                .navigationBarItems(trailing:
+                                        Button("Reload") {
+                    self.viewModel.loadTodos(forceLoad: true)
+                })
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding()
+    }
+    
+    private func listView() -> AnyView {
+        switch viewModel.todos {
+        case .loading:
+            return AnyView(Text("..Loading").multilineTextAlignment(.center))
+        case .result(let todos):
+            return AnyView(List(todos) { todo in
+                Text(todo.title)
+            })
+        case .error(let description):
+            return AnyView(Text(description).multilineTextAlignment(.center))
+        }
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+extension TodoDTO: @retroactive Identifiable {}
+
+extension ContentView {
+    
+    enum LoadableTodos {
+        case loading
+        case result([TodoDTO])
+        case error(String)
+    }
+    
+    @MainActor
+    class ViewModel: ObservableObject {
+        @Published var todos = LoadableTodos.loading
+        
+        let helper = KoinHelper()
+        
+        init() {
+            loadTodos(forceLoad: true)
+        }
+        
+        func loadTodos(forceLoad: Bool) {
+            Task {
+                do {
+                    self.todos = .loading
+                    let todoList  = try await helper.getTodos(forceReload: forceLoad)
+                    self.todos = .result(todoList)
+                }
+                catch {
+                    self.todos = .error(error.localizedDescription)
+                }
+            }
+        }
     }
 }
